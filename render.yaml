@@ -1,0 +1,51 @@
+# Render Blueprint - FocusFlow Deployment
+# Defines both the backend API and the frontend static site.
+
+services:
+  # ── Backend Flask API ──
+  - type: web
+    name: focusflow-api
+    runtime: python
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.6"
+      - key: MONGO_URI
+        sync: false # Set manually in the Render dashboard
+      - key: MONGO_DB_NAME
+        value: focusflow
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://focusflow-frontend.onrender.com
+      - key: DEBUG
+        value: "false"
+      - key: SEED_DEMO_USER
+        value: "false"
+      - key: GEMINI_API_KEY
+        sync: false # Optional - enables the AI coach chat endpoint
+    healthCheckPath: /api/health
+
+  # ── Frontend React Static Site ──
+  - type: web
+    name: focusflow-frontend
+    runtime: static
+    rootDir: .
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://focusflow-api.onrender.com/api
