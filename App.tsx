@@ -1,10 +1,6 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 import React, { useState, useEffect } from 'react';
 import { View, Task, UserProfile } from './types';
-import { authApi, tasksApi, getAuthToken, setAuthToken } from './services/api';
+import { authApi, tasksApi, trackerApi, getAuthToken, setAuthToken } from './services/api';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import TaskManager from './components/TaskManager';
@@ -29,12 +25,10 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Import trackerApi
+  // Activity tracking is Windows-only, so a failure here is expected on other platforms
   const startTrackerForUser = async () => {
     try {
-      const { trackerApi } = await import('./services/api');
       await trackerApi.start();
-      console.log('🎯 Tracker started for logged-in user');
     } catch (error) {
       console.log('Tracker not available or already running');
     }
