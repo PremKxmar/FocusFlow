@@ -161,7 +161,9 @@ const MLInsights: React.FC = () => {
                     arima: realtimeResponse.models.arima,
                     prophet: realtimeResponse.models.prophet,
                 };
-                newModelStatus = realtimeResponse;
+                // Keyed by model name, since the per-model badge reads
+                // modelStatus[modelKey].trained
+                newModelStatus = realtimeResponse.models;
                 setModels(newModels);
                 setModelStatus(newModelStatus);
             } else {
@@ -172,7 +174,9 @@ const MLInsights: React.FC = () => {
                     arima: compareResponse.models?.arima || null,
                     prophet: compareResponse.models?.prophet || null,
                 };
+                newModelStatus = compareResponse.models;
                 setModels(newModels);
+                setModelStatus(newModelStatus);
             }
 
             // Save to cache
@@ -193,6 +197,7 @@ const MLInsights: React.FC = () => {
                     arima: compareResponse.models?.arima || null,
                     prophet: compareResponse.models?.prophet || null,
                 });
+                setModelStatus(compareResponse.models);
             } catch {
                 setError('Insufficient data for ML predictions');
             }
