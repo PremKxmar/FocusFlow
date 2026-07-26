@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import { View } from '../types';
+import { View, VIEW_TITLES } from '../types';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -28,22 +28,25 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => {
+  // Labels come from VIEW_TITLES so the sidebar and the page header cannot drift apart.
+  const item = (id: View, icon: typeof LayoutDashboard) => ({ id, label: VIEW_TITLES[id], icon });
+
   const menuItems = [
-    { id: 'DASHBOARD' as View, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'TASKS' as View, label: 'Task Manager', icon: CheckSquare },
-    { id: 'ANALYTICS' as View, label: 'Analytics', icon: BarChart3 },
-    { id: 'ML_INSIGHTS' as View, label: 'ML Insights', icon: BrainCircuit },
-    { id: 'NOVEL_INSIGHTS' as View, label: 'Novel Research', icon: Sparkles },
-    { id: 'FOCUS' as View, label: 'Focus Mode', icon: Target },
-    { id: 'REPORTS' as View, label: 'Reports', icon: FileText },
-    { id: 'CHATBOT' as View, label: 'AI Coach', icon: MessageSquare },
-    { id: 'WELLNESS' as View, label: 'Wellness', icon: Heart },
-    { id: 'TEAM' as View, label: 'Team', icon: Users },
+    item('DASHBOARD', LayoutDashboard),
+    item('TASKS', CheckSquare),
+    item('ANALYTICS', BarChart3),
+    item('ML_INSIGHTS', BrainCircuit),
+    item('NOVEL_INSIGHTS', Sparkles),
+    item('FOCUS', Target),
+    item('REPORTS', FileText),
+    item('CHATBOT', MessageSquare),
+    item('WELLNESS', Heart),
+    item('TEAM', Users),
   ];
 
   const bottomItems = [
-    { id: 'PROFILE' as View, label: 'Profile', icon: User },
-    { id: 'SETTINGS' as View, label: 'Settings', icon: Settings },
+    item('PROFILE', User),
+    item('SETTINGS', Settings),
   ];
 
   return (
@@ -53,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
           <Timer className="w-6 h-6" />
         </div>
         <span className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">
-          Chronos<span className="text-indigo-500">AI</span>
+          Focus<span className="text-indigo-500">Flow</span>
         </span>
       </div>
 

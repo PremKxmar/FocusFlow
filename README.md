@@ -6,10 +6,25 @@ FocusFlow passively tracks which applications and websites you use, classifies t
 
 React + TypeScript frontend, Flask + MongoDB backend, scikit-learn / TensorFlow / statsmodels ML layer.
 
+### Live demo
+
+**[focusflow-frontend-l4o7.onrender.com](https://focusflow-frontend-l4o7.onrender.com)** — click **Try Demo Account**, or sign in with:
+
+```
+demo@focusflow.local  /  demo123
+```
+
+The demo account is preloaded with 90 days of activity history, 176 focus sessions and a 16-item task backlog, so every screen renders with real data.
+
+> **Free-tier cold start.** Both services sleep after 15 minutes of inactivity. The first request wakes the backend and loads the ML stack, so give it **60–90 seconds** on the first load. Subsequent requests are ~1s, and forecasts ~3s.
+
+API: [focusflow-api-cv8x.onrender.com/api/health](https://focusflow-api-cv8x.onrender.com/api/health)
+
 ---
 
 ## Table of Contents
 
+- [Screenshots](#screenshots)
 - [Screens & Features](#screens--features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
@@ -22,6 +37,45 @@ React + TypeScript frontend, Flask + MongoDB backend, scikit-learn / TensorFlow 
 - [Project Structure](#project-structure)
 - [Known Limitations](#known-limitations)
 - [License](#license)
+
+---
+
+## Screenshots
+
+### Dashboard
+Today's productive/distracted split, distraction alerts with peak hour and top distractor, productivity trend chart, and the active task list.
+
+![FocusFlow dashboard](docs/screenshots/dashboard.png)
+
+### ML Insights
+Next-day forecast with expected load and stress risk, peak focus window, and a 7-day forecast plotting LSTM, ARIMA and Prophet predictions side by side.
+
+![ML insights and time-series forecasting](docs/screenshots/ml-insights.png)
+
+### Analytics
+Weekly productive-vs-distracted series, consistency score and streak, peak distraction hours, and the top focus window.
+
+![Performance analytics](docs/screenshots/analytics.png)
+
+<details>
+<summary><b>More screens</b> — Task Manager, Reports, Wellness</summary>
+
+### Task Manager
+Filterable backlog with priority, category, deadline, progress bars and overdue highlighting.
+
+![Task manager](docs/screenshots/tasks.png)
+
+### Reports
+Completion velocity, deep-work volume, focus score and distraction cost, with weekly/monthly ranges and CSV export.
+
+![Performance reports](docs/screenshots/reports.png)
+
+### Wellness
+Daily mood, energy, stress and sleep check-in, plus mood↔productivity correlation.
+
+![Wellness tracking](docs/screenshots/wellness.png)
+
+</details>
 
 ---
 
@@ -202,13 +256,15 @@ Without this the API still runs; forecasting endpoints fall back to the checked-
 | `GEMINI_API_KEY` | no | — | Enables the AI coach; without it `/api/insights/chat` returns 503 and everything else works |
 | `SEED_DEMO_USER` | no | `false` | Creates a demo account on boot |
 | `DEMO_USER_EMAIL` | no | `demo@focusflow.local` | Only used when seeding |
-| `DEMO_USER_PASSWORD` | no | `changeme123` | Only used when seeding |
+| `DEMO_USER_PASSWORD` | no | `demo123` | Only used when seeding. Must match the credentials the frontend's *Try Demo Account* button sends (see [components/Auth.tsx](components/Auth.tsx)) |
 
 ### Frontend
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
-| `VITE_API_URL` | in prod | `http://localhost:5000/api` | Must include the `/api` suffix |
+| `VITE_API_URL` | in prod | `http://localhost:5000/api` | Base API URL. A missing or extra `/api` suffix is normalised at runtime by `normaliseApiBase` in [services/api.ts](services/api.ts) |
+
+`VITE_API_URL` is inlined by Vite **at build time**, not read at runtime — after changing it on the host you must trigger a rebuild with the cache cleared, or the old value stays baked into the bundle.
 
 ---
 
@@ -216,18 +272,24 @@ Without this the API still runs; forecasting endpoints fall back to the checked-
 
 The repo ships a Render Blueprint ([render.yaml](render.yaml)) defining both services:
 
-- **`focusflow-api`** — Python web service, gunicorn (2 workers × 4 threads), health check on `/api/health`
+- **`focusflow-api`** — Python web service, gunicorn, health check on `/api/health`
 - **`focusflow-frontend`** — static site built with `npm ci && npm run build`, SPA rewrite to `index.html`
 
 **To deploy:**
 
 1. Push this repository to GitHub.
-2. In Render, create a new **Blueprint** and point it at the repo.
+2. In Render, create a new **Blueprint** and point it at the repo. (Blueprints require a payment method on file; the same two services can be created by hand on the free tier instead.)
 3. Supply `MONGO_URI` when prompted (`SECRET_KEY` and `JWT_SECRET` are auto-generated).
 4. Optionally set `GEMINI_API_KEY` to enable the AI coach.
-5. Once the API is live, confirm `CORS_ORIGINS` on the API service matches the deployed frontend URL.
+5. Once both services are live, set `CORS_ORIGINS` on the API to the real frontend URL and `VITE_API_URL` on the frontend to the real API URL, then redeploy the frontend **with the build cache cleared**.
 
-**Notes on the free tier:** services spin down when idle, so the first request after a lull takes 50–90 seconds to cold-start. The ML dependency set is heavy (TensorFlow alone is several hundred MB) — the lazy-import design in `backend/ml/__init__.py` is what keeps the service inside Render's startup and memory budget.
+Step 5 matters because `render.yaml` hardcodes the two service URLs. If either name is already taken, Render appends a suffix and the services no longer point at each other.
+
+**Notes on the free tier:**
+
+- Services spin down when idle; the first request after a lull takes 60–90 seconds to cold-start. Measured on the live deployment: first `/api/insights/forecast` call **70.8s**, subsequent calls **~3.4s**.
+- Run gunicorn with **one worker**. Each worker loads its own copy of TensorFlow, and two will exhaust the 512 MB free instance. Render sets `WEB_CONCURRENCY=1` automatically based on available CPUs.
+- The ML dependency set is heavy (TensorFlow alone is a 620 MB wheel). The lazy-import design in `backend/ml/__init__.py` is what keeps startup inside Render's budget — the health check and all CRUD routes respond without ever importing TensorFlow, and if the ML import does fail the forecast endpoint degrades to a heuristic rather than erroring.
 
 Vercel and Netlify can host the frontend, but not this backend — a long-lived Flask process with a background thread and a large native dependency tree doesn't fit a serverless runtime. Render or Railway are the right shape for the API.
 
@@ -362,10 +424,11 @@ FocusFlow/
 │   │   ├── context_switch.py  procrastination_detector.py
 │   │   ├── adaptive_ensemble.py  mood_productivity_var.py
 │   │   └── models/ saved_models/       # Trained artifacts
-│   ├── dataset/                # Training datasets and plots
+│   ├── dataset/                # Training dataset
 │   └── utils/                  # DB connection, auth middleware
 │
 ├── selection_of_model/         # ARIMA model-selection study
+├── docs/screenshots/           # README screenshots
 └── render.yaml                 # Render Blueprint
 ```
 

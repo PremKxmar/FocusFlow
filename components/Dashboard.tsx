@@ -208,10 +208,10 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, setView }) => {
               {distractionPatterns?.top_distractions?.length > 0 ? (
                 <>
                   <span className="text-xl font-bold text-slate-800 dark:text-white truncate block">
-                    {distractionPatterns.top_distractions[0].name || distractionPatterns.top_distractions[0].app || 'Unknown'}
+                    {distractionPatterns.top_distractions[0].app_name || 'Unknown'}
                   </span>
                   <p className="text-[10px] text-slate-400 mt-1">
-                    {distractionPatterns.top_distractions[0].minutes || distractionPatterns.top_distractions[0].duration || 0} min total
+                    {distractionPatterns.top_distractions[0].total_minutes || 0} min total
                   </p>
                 </>
               ) : (

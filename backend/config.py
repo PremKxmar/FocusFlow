@@ -35,4 +35,6 @@ class Config:
     # Demo seeding - off by default; enable locally to get a throwaway login
     SEED_DEMO_USER = _env_bool('SEED_DEMO_USER', 'false')
     DEMO_USER_EMAIL = os.getenv('DEMO_USER_EMAIL', 'demo@focusflow.local')
-    DEMO_USER_PASSWORD = os.getenv('DEMO_USER_PASSWORD', 'changeme123')
+    # Must match the credentials the frontend's "Try Demo Account" button sends
+    # (see components/Auth.tsx), or seeding produces an account that button cannot use.
+    DEMO_USER_PASSWORD = os.getenv('DEMO_USER_PASSWORD', 'demo123')

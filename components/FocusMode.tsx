@@ -479,7 +479,7 @@ const FocusMode: React.FC = () => {
               <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3">
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-400">💡 Tip</p>
                 <p className="text-xs text-amber-600 dark:text-amber-300 mt-1">
-                  Your top distractor is "{distractionPatterns.top_distractions[0]?.name || distractionPatterns.top_distractions[0]?.app}". Consider blocking it during focus sessions.
+                  Your top distractor is "{distractionPatterns.top_distractions[0]?.app_name}". Consider blocking it during focus sessions.
                 </p>
               </div>
             )}
@@ -702,8 +702,8 @@ const FocusMode: React.FC = () => {
                 <div className="space-y-1.5">
                   {distractionPatterns.top_distractions.slice(0, 4).map((d: any, i: number) => (
                     <div key={i} className="flex items-center justify-between py-1.5 px-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{d.name || d.app || `App ${i + 1}`}</span>
-                      <span className="text-xs text-slate-400">{d.minutes || d.duration || d.count || 0} min</span>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{d.app_name || `App ${i + 1}`}</span>
+                      <span className="text-xs text-slate-400">{d.total_minutes || 0} min</span>
                     </div>
                   ))}
                 </div>

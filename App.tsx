@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Task, UserProfile } from './types';
+import { View, Task, UserProfile, VIEW_TITLES } from './types';
 import { authApi, tasksApi, trackerApi, getAuthToken, setAuthToken } from './services/api';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -153,8 +153,10 @@ const App: React.FC = () => {
             {/* Top Bar */}
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white capitalize">
-                  {view === 'DASHBOARD' ? `Welcome Back, ${user?.name?.split(' ')[0] || 'User'}` : view.toLowerCase().replace('_', ' ')}
+                <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">
+                  {view === 'DASHBOARD'
+                    ? `Welcome Back, ${user?.name?.split(' ')[0] || 'User'}`
+                    : VIEW_TITLES[view]}
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}

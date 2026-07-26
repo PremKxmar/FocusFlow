@@ -4,9 +4,25 @@
  */
 
 // @ts-ignore
-const _rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-// Strip any trailing path segments beyond /api (safety guard against misconfigured env vars)
-const API_BASE_URL = _rawUrl.replace(/\/api\/.*$/, '/api').replace(/\/+$/, '');
+const _rawUrl: string = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+/**
+ * Every endpoint below is written relative to the API root, so VITE_API_URL has
+ * to resolve to exactly `<origin>/api`. Deployments get this wrong in both
+ * directions - omitting `/api` entirely, or pasting a full endpoint URL - and
+ * either mistake 404s every request with no obvious cause. Normalise instead of
+ * trusting the value.
+ */
+const normaliseApiBase = (raw: string): string => {
+    const trimmed = raw.trim().replace(/\/+$/, '');
+    const apiIndex = trimmed.indexOf('/api');
+    // Already contains /api: cut anything after it (e.g. a pasted /api/auth/login).
+    if (apiIndex !== -1) return trimmed.slice(0, apiIndex + '/api'.length);
+    // Bare origin: append the missing /api.
+    return `${trimmed}/api`;
+};
+
+const API_BASE_URL = normaliseApiBase(_rawUrl);
 
 // Token management - uses sessionStorage so token clears when browser closes
 let authToken: string | null = sessionStorage.getItem('focusflow_token');
