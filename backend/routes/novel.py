@@ -26,24 +26,56 @@ def _get_activities(db, user_id, days=14):
     """Fetch recent activities for a user."""
     since = datetime.utcnow() - timedelta(days=days)
     return list(db.activities.find(
-        {'user_id': user_id, 'start_time': {'$gte': since}},
+        {'user_id': user_id, 'timestamp': {'$gte': since}},
         {'_id': 0}
-    ).sort('start_time', 1))
+    ).sort('timestamp', 1))
+
+
+def _get_tasks(db, user_id):
+    """
+    Fetch a user's tasks. Tasks persist user_id as a string while activities and
+    focus sessions use an ObjectId, so match either form rather than assuming one.
+    """
+    ids = [str(user_id)]
+    if not isinstance(user_id, ObjectId):
+        try:
+            ids.append(ObjectId(str(user_id)))
+        except Exception:
+            pass
+    else:
+        ids.append(user_id)
+    return list(db.tasks.find({'user_id': {'$in': ids}}, {'_id': 0}))
+
+
+def _is_overdue(task):
+    """
+    Derive overdue state from the deadline. `is_overdue` is computed during API
+    serialisation and never stored, so reading it off a raw document is always False.
+    """
+    if task.get('completed'):
+        return False
+    deadline = task.get('deadline')
+    if not deadline:
+        return False
+    try:
+        return datetime.strptime(deadline, '%Y-%m-%d').date() < datetime.utcnow().date()
+    except (ValueError, TypeError):
+        return False
 
 
 def _get_focus_sessions(db, user_id, days=14):
     since = datetime.utcnow() - timedelta(days=days)
     return list(db.focus_sessions.find(
-        {'user_id': user_id, 'started_at': {'$gte': since}},
+        {'user_id': user_id, 'start_time': {'$gte': since}},
         {'_id': 0}
-    ).sort('started_at', 1))
+    ).sort('start_time', 1))
 
 
 def _daily_aggregates(activities):
     """Group activities into per-day productive/distracting minutes."""
     daily = {}
     for a in activities:
-        st = a.get('start_time')
+        st = a.get('timestamp')
         if isinstance(st, datetime):
             day = st.strftime('%Y-%m-%d')
         else:
@@ -73,15 +105,15 @@ def shap_explanations():
         activities = _get_activities(db, user_id)
         weekly_trends = _daily_aggregates(activities)
 
-        tasks = list(db.tasks.find({'user_id': user_id}, {'_id': 0}))
+        tasks = _get_tasks(db, user_id)
         task_stats = {
             'total': len(tasks),
             'completed': sum(1 for t in tasks if t.get('completed')),
-            'overdue': sum(1 for t in tasks if t.get('is_overdue')),
+            'overdue': sum(1 for t in tasks if _is_overdue(t)),
         }
 
         sessions = _get_focus_sessions(db, user_id)
-        durations = [s.get('duration', 0) for s in sessions if s.get('duration')]
+        durations = [s.get('actual_duration', 0) for s in sessions if s.get('actual_duration')]
         focus_stats = {
             'total_sessions': len(sessions),
             'avg_duration': sum(durations) / max(len(durations), 1),
@@ -264,14 +296,14 @@ def novel_overview():
     try:
         from ml import get_shap_explainer
         weekly_trends = _daily_aggregates(activities)
-        tasks = list(db.tasks.find({'user_id': user_id}, {'_id': 0}))
+        tasks = _get_tasks(db, user_id)
         task_stats = {
             'total': len(tasks),
             'completed': sum(1 for t in tasks if t.get('completed')),
-            'overdue': sum(1 for t in tasks if t.get('is_overdue')),
+            'overdue': sum(1 for t in tasks if _is_overdue(t)),
         }
         all_sessions = _get_focus_sessions(db, user_id)
-        durations = [s.get('duration', 0) for s in all_sessions if s.get('duration')]
+        durations = [s.get('actual_duration', 0) for s in all_sessions if s.get('actual_duration')]
         focus_stats = {
             'total_sessions': len(all_sessions),
             'avg_duration': sum(durations) / max(len(durations), 1),
@@ -285,7 +317,7 @@ def novel_overview():
     try:
         from ml import get_fatigue_index
         dfi = get_fatigue_index()
-        today_acts = [a for a in activities if (a.get('start_time', datetime.min)).date() == datetime.utcnow().date()] if activities else []
+        today_acts = [a for a in activities if (a.get('timestamp', datetime.min)).date() == datetime.utcnow().date()] if activities else []
         results['fatigue'] = dfi.compute(today_acts, sessions)
     except Exception as e:
         results['fatigue'] = {'error': str(e)}

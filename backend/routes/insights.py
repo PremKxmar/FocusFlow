@@ -605,6 +605,7 @@ def compare_ml_models():
                         'type': 'Deep Learning',
                         'description': 'Captures complex non-linear patterns and sequential dependencies',
                         'predictions': fallback_preds['lstm'],
+                        'trained': False,
                         'status': 'fallback'
                     },
                     'arima': {
@@ -612,6 +613,7 @@ def compare_ml_models():
                         'type': 'Statistical',
                         'description': 'Handles smooth trends and seasonal patterns',
                         'predictions': fallback_preds['arima'],
+                        'trained': False,
                         'status': 'fallback'
                     },
                     'prophet': {
@@ -619,6 +621,7 @@ def compare_ml_models():
                         'type': 'Additive Regression',
                         'description': 'Manages seasonality and holiday effects',
                         'predictions': fallback_preds['prophet'],
+                        'trained': False,
                         'status': 'fallback'
                     }
                 },
@@ -1061,19 +1064,22 @@ def get_realtime_predictions():
                         'name': 'LSTM (Long Short-Term Memory)',
                         'type': 'Deep Learning',
                         'description': 'Captures complex non-linear patterns',
-                        'predictions': fallback_preds['lstm']
+                        'predictions': fallback_preds['lstm'],
+                        'trained': False
                     },
                     'arima': {
                         'name': 'ARIMA',
                         'type': 'Statistical',
                         'description': 'Handles smooth trends and seasonal patterns',
-                        'predictions': fallback_preds['arima']
+                        'predictions': fallback_preds['arima'],
+                        'trained': False
                     },
                     'prophet': {
                         'name': 'Prophet',
                         'type': 'Additive Regression',
                         'description': 'Manages seasonality and holiday effects',
-                        'predictions': fallback_preds['prophet']
+                        'predictions': fallback_preds['prophet'],
+                        'trained': False
                     }
                 }
             }), 200
@@ -1123,12 +1129,17 @@ def get_realtime_predictions():
         # Wrap real ML predictions in the same format as fallback
         # Frontend expects: model.predictions.forecast
         def wrap_predictions(pred, fallback, name, model_type, description):
+            # 'trained' tells the UI whether this came from the fitted model or the
+            # heuristic fallback. Without it the frontend cannot distinguish the two
+            # and labels every model "Fallback" even when the real one produced the
+            # forecast.
             if pred and pred.get('forecast'):
                 # Real ML prediction - wrap it
                 return {
                     'name': name,
                     'type': model_type,
                     'description': description,
+                    'trained': True,
                     'predictions': pred  # pred already has 'forecast', 'average_predicted', etc.
                 }
             else:
@@ -1137,6 +1148,7 @@ def get_realtime_predictions():
                     'name': name,
                     'type': model_type,
                     'description': description,
+                    'trained': False,
                     'predictions': fallback
                 }
         

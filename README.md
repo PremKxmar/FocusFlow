@@ -57,23 +57,43 @@ Weekly productive-vs-distracted series, consistency score and streak, peak distr
 
 ![Performance analytics](docs/screenshots/analytics.png)
 
+### Novel Research
+The six research features behind one tab — SHAP feature attribution over the productivity classifier, plus fatigue, context-switch, procrastination, ensemble and mood↔productivity views.
+
+![Novel research insights](docs/screenshots/novel-research.png)
+
 <details>
-<summary><b>More screens</b> — Task Manager, Reports, Wellness</summary>
+<summary><b>More screens</b> — Task Manager, Focus Mode, Reports, AI Coach, Wellness, Team</summary>
 
 ### Task Manager
 Filterable backlog with priority, category, deadline, progress bars and overdue highlighting.
 
 ![Task manager](docs/screenshots/tasks.png)
 
+### Focus Mode
+Pomodoro-style deep-work timer with work/break cycles and an app firewall that blocks known distractors during a session.
+
+![Focus mode](docs/screenshots/focus-mode.png)
+
 ### Reports
 Completion velocity, deep-work volume, focus score and distraction cost, with weekly/monthly ranges and CSV export.
 
 ![Performance reports](docs/screenshots/reports.png)
 
+### AI Coach
+Conversational assistant grounded in your own tracked data, with suggested prompts for focus, patterns and distraction reduction.
+
+![AI coach](docs/screenshots/ai-coach.png)
+
 ### Wellness
 Daily mood, energy, stress and sleep check-in, plus mood↔productivity correlation.
 
 ![Wellness tracking](docs/screenshots/wellness.png)
+
+### Team
+Create or join a team by invite code for a shared productivity dashboard.
+
+![Team productivity](docs/screenshots/team.png)
 
 </details>
 
